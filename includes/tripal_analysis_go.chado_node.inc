@@ -403,7 +403,6 @@ function chado_analysis_go_submit_job($node) {
  * Implements hook_node_view().
  */
 function tripal_analysis_go_node_view($node, $view_mode, $langcode) {
-
   switch ($node->type) {
     case 'chado_analysis_go':
       if ($view_mode == 'full') {
@@ -421,12 +420,16 @@ function tripal_analysis_go_node_view($node, $view_mode, $langcode) {
       }
       break;
     case 'chado_organism':
+     $goAnalysisCheck =  tripal_analysis_go_load_organism_go_summary($node);
       if ($view_mode == 'full') {
-        $node->content['tripal_organism_go_summary'] = array(
-          '#markup' => theme('tripal_organism_go_summary', array('node' => $node)),
-          '#tripal_toc_id'    => 'GO',
-          '#tripal_toc_title' => 'GO Analysis Reports',
-        );
+        if ($goAnalysisCheck['has_results'] > 0 ){
+          $node->content['tripal_organism_go_summary'] = array(
+            '#markup' => theme('tripal_organism_go_summary', array('node' => $node)),
+            '#tripal_toc_id'    => 'GO',
+            '#tripal_toc_title' => 'GO Analysis Reports',
+        );} else {
+          dpm($goAnalysisCheck);
+        }
       }
       break;
     case 'chado_feature':
