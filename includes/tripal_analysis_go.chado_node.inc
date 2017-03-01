@@ -428,7 +428,6 @@ function tripal_analysis_go_node_view($node, $view_mode, $langcode) {
             '#tripal_toc_id'    => 'GO',
             '#tripal_toc_title' => 'GO Analysis Reports',
         );} else {
-          dpm($goAnalysisCheck);
         }
       }
       break;
