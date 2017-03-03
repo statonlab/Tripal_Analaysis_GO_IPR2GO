@@ -152,7 +152,7 @@ function chado_analysis_go_form($node, $form_state) {
       '#description'   => t('Please enter the full system path for the GAF file, or a path within the Drupal
                              installation (e.g. /sites/default/files/xyz.txt).  The path must be accessible to the
                              server on which this Drupal instance is running.'),
-      '#required' => TRUE,
+      '#required' => FALSE,
       '#default_value' => $gaf_file,
   );
 
@@ -196,8 +196,10 @@ function chado_analysis_go_form($node, $form_state) {
       '#type' => 'radios',
       '#title' => t('Import options'),
       '#required' => TRUE,
-      '#options' => array(t('Add GO terms')/*,t('Replace GO terms')*/,t('Remove GO terms')),
-      '#description' => t('Select if GO terms in the GAF file will be added to each feature or removed.'),
+      '#options' => array(t('Add GO terms')/*,t('Replace GO terms')*/,t('Remove GO terms'), t('No import')),
+      '#description' => t('Select if GO terms in the GAF file will be added to each feature or removed.'.
+        ' If you are adding a GO analysis to describe existing GO terms (such as those imported'.
+        'from existing interpro results.)'),
       '#default_value' => $method,
    );
 

@@ -2,7 +2,7 @@
 
 function tripal_analysis_go_cv_chart($chart_id){
 
-  // The CV module will create the JSON array necessary for buillding a
+  // The CV module will create the JSON array necessary for building a
   // pie chart using jgChart and Google Charts.  We have to pass to it
   // a table that contains count information, tell it which column
   // contains the cvterm_id and provide a filter for getting the
