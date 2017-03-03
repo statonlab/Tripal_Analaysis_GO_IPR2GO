@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d66dd530-b06b-4fe4-b25f-32bb9e473fa1" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/includes/tripal_analysis_go.chado_node.inc" afterPath="$PROJECT_DIR$/includes/tripal_analysis_go.chado_node.inc" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/includes/tripal_analysis_go.chart.inc" afterPath="$PROJECT_DIR$/includes/tripal_analysis_go.chart.inc" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/includes/tripal_analysis_go.gaf_loader.inc" afterPath="$PROJECT_DIR$/includes/tripal_analysis_go.gaf_loader.inc" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/theme/tripal_analysis_go.theme.inc" afterPath="$PROJECT_DIR$/theme/tripal_analysis_go.theme.inc" />
-    </list>
+    <list default="true" id="d66dd530-b06b-4fe4-b25f-32bb9e473fa1" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -21,18 +16,36 @@
     <window id="1">
       <content type="file-editors">
         <state>
-          <leaf>
-            <file leaf-file-name="tripal_analysis_go.chado_node.inc" pinned="false" current-in-tab="true">
-              <entry file="file://$PROJECT_DIR$/includes/tripal_analysis_go.chado_node.inc">
-                <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="340">
-                    <caret line="198" column="41" lean-forward="true" selection-start-line="198" selection-start-column="29" selection-end-line="198" selection-end-column="41" />
-                    <folding />
-                  </state>
-                </provider>
-              </entry>
-            </file>
-          </leaf>
+          <splitter split-orientation="vertical" split-proportion="0.5">
+            <split-first>
+              <leaf>
+                <file leaf-file-name="tripal_analysis_go.chado_node.inc" pinned="false" current-in-tab="true">
+                  <entry file="file://$PROJECT_DIR$/includes/tripal_analysis_go.chado_node.inc">
+                    <provider selected="true" editor-type-id="text-editor">
+                      <state relative-caret-position="29">
+                        <caret line="245" column="11" lean-forward="false" selection-start-line="245" selection-start-column="0" selection-end-line="246" selection-end-column="0" />
+                        <folding />
+                      </state>
+                    </provider>
+                  </entry>
+                </file>
+              </leaf>
+            </split-first>
+            <split-second>
+              <leaf>
+                <file leaf-file-name="tripal_analysis_go.chado_node.inc" pinned="false" current-in-tab="true">
+                  <entry file="file://$PROJECT_DIR$/includes/tripal_analysis_go.chado_node.inc">
+                    <provider selected="true" editor-type-id="text-editor">
+                      <state relative-caret-position="300">
+                        <caret line="198" column="79" lean-forward="false" selection-start-line="198" selection-start-column="73" selection-end-line="198" selection-end-column="79" />
+                        <folding />
+                      </state>
+                    </provider>
+                  </entry>
+                </file>
+              </leaf>
+            </split-second>
+          </splitter>
         </state>
       </content>
     </window>
@@ -81,6 +94,8 @@
       <find>import options</find>
       <find>remove</find>
       <find>Add GO terms</find>
+      <find>_validate</find>
+      <find>load</find>
     </findStrings>
     <dirStrings>
       <dir>$PROJECT_DIR$</dir>
@@ -279,12 +294,12 @@
       <updated>1488386781552</updated>
       <workItem from="1488386783003" duration="8828000" />
       <workItem from="1488402916176" duration="286000" />
-      <workItem from="1488488333229" duration="3575000" />
+      <workItem from="1488488333229" duration="4042000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="12689000" />
+    <option name="totallyTimeSpent" value="13156000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="2560" height="1413" extended-state="6" />
@@ -449,18 +464,18 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/includes/tripal_analysis_go.chado_node.inc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="340">
-          <caret line="198" column="41" lean-forward="true" selection-start-line="198" selection-start-column="29" selection-end-line="198" selection-end-column="41" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/includes/tripal_analysis_go.gaf_loader.inc">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="563">
           <caret line="230" column="44" lean-forward="true" selection-start-line="230" selection-start-column="44" selection-end-line="230" selection-end-column="44" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/includes/tripal_analysis_go.chado_node.inc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="29">
+          <caret line="245" column="11" lean-forward="false" selection-start-line="245" selection-start-column="0" selection-end-line="246" selection-end-column="0" />
           <folding />
         </state>
       </provider>
