@@ -254,6 +254,9 @@ function chado_analysis_go_validate($node,  &$form, &$form_state) {
   $node->seq_type        = trim($node->seq_type);
   $node->query_uniquename  = trim($node->query_uniquename);
   $node->re_uniquename  = trim($node->query_uniquename);
+  $node->import_options->method  = trim($node->import_options->method);
+
+  dpm($node->import_options->method);
 
   if($node->gaf_file and !is_readable($node->gaf_file)) {
     form_set_error('gaf_file', "Can not read GAF file: '$node->gaf_file'. Please check file permissions or typos in the file path.");

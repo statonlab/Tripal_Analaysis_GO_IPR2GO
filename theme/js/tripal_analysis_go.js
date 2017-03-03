@@ -15,6 +15,9 @@ google.charts.load('current', {'packages':['corechart']});
 
 $.fn.tripal_analysis_go_init_graph = function() {
     baseurl = Drupal.settings.basePath;
+    if (baseurl == '/'){
+      baseurl = '';
+    }
 
     $('.tripal_cv_chart').each(function(index) {
 
@@ -51,6 +54,10 @@ $.fn.tripal_analysis_go_init_graph = function() {
 
 $.fn.tripal_analysis_go_init_tree = function() {
     baseurl = Drupal.settings.basePath;
+
+    if (baseurl == '/'){
+      baseurl = '';
+    }
 
     $('.tripal_cv_tree').each(function(index) {
 
@@ -112,6 +119,9 @@ $.fn.tripal_analysis_go_init_tree = function() {
 
 function tripal_cv_cvterm_info(cvterm_id, vars){
   var link = Drupal.settings.basePath;
+  if (link == '/'){
+    link = '';
+  }
   link += '/tripal_cv_cvterm_info/' + cvterm_id + '?cv=' + vars.cv + '&tree_id=' + vars.tree_id;
 
   // Get the cv_id from DOM

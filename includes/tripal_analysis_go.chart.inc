@@ -37,8 +37,8 @@ function tripal_analysis_go_cv_chart($chart_id){
         CNT.cvterm_id IN (
           SELECT CVTR.subject_id
           FROM {CVTerm_relationship} CVTR
-            INNER JOIN {CVTerm} CVT on CVTR.object_id = CVT.cvterm_id
-            INNER JOIN {CV} on CVT.cv_id = CV.cv_id
+            INNER JOIN {cvterm} CVT on CVTR.object_id = CVT.cvterm_id
+            INNER JOIN {cv} on CVT.cv_id = CV.cv_id
           WHERE CVT.name = '$class' AND
                  CV.name = '$class'
         )
@@ -98,7 +98,7 @@ function tripal_cv_count_chart($cnt_table, $fk_column,
   }
   $sql = "
     SELECT CVT.name, CVT.cvterm_id, CNT.$cnt_column as num_items
-    FROM {$cnt_table} CNT
+    FROM {{$cnt_table}} CNT
      INNER JOIN {cvterm} CVT on CNT.$fk_column = CVT.cvterm_id
     WHERE $filter
   ";
