@@ -145,14 +145,14 @@ function chado_analysis_go_form($node, $form_state) {
       '#markup' => t('<b>Note:</b> currently, the GAF loader only uses column 2 (Object ID) and 5 (GO ID)
           from the GAF file, and simply imports GO terms for the features.'),
    );
-
+//
    $form['go']['gaf_file']= array(
       '#type'          => 'textfield',
       '#title'         => t('GAF File'),
       '#description'   => t('Please enter the full system path for the GAF file, or a path within the Drupal
                              installation (e.g. /sites/default/files/xyz.txt).  The path must be accessible to the
                              server on which this Drupal instance is running.'),
-      '#required' => TRUE,
+      '#required' => FALSE,
       '#default_value' => $gaf_file,
   );
 
@@ -269,11 +269,14 @@ function chado_analysis_go_validate($node,  &$form, &$form_state) {
   $node->seq_type        = trim($node->seq_type);
   $node->query_uniquename  = trim($node->query_uniquename);
   $node->re_uniquename  = trim($node->query_uniquename);
-  dpm($node);
 
   if($node->gaf_file and !is_readable($node->gaf_file)) {
     form_set_error('gaf_file', "Can not read GAF file: '$node->gaf_file'. Please check file permissions or typos in the file path.");
   }
+   if (!$node->gaf_file and !$node->IPRanalysis) {
+    form_set_error('gaf_file', "Please specify either a GAF file or Interpro analysis");
+  }
+
 }
 
 function chado_analysis_go_load($nodes) {
@@ -355,7 +358,7 @@ function chado_analysis_go_insert($node) {
   */
 function chado_analysis_go_update($node) {
 
-  // update the anlaysis
+  // update the analysis
   chado_analysis_update($node);
 
   // trim character fields
@@ -387,7 +390,7 @@ function chado_analysis_go_update($node) {
 }
 
 /**
- * Delete go anlysis
+ * Delete go analysis
  */
 function chado_analysis_go_delete($node) {
   chado_analysis_delete($node);
