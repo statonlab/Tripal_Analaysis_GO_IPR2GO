@@ -196,7 +196,7 @@ function chado_analysis_go_form($node, $form_state) {
       '#type' => 'radios',
       '#title' => t('Import options'),
       '#required' => TRUE,
-      '#options' => array(t('Add GO terms')/*,t('Replace GO terms')*/,t('Remove GO terms')),
+      '#options' => array(t('Add GO terms')/*,t('Replace GO terms')*/,t('Remove GO terms'), t('Add GO terms from existing IPR analysis')),
       '#description' => t('Select if GO terms in the GAF file will be added to each feature or removed.'),
       '#default_value' => $method,
    );
@@ -209,6 +209,24 @@ function chado_analysis_go_form($node, $form_state) {
                           'results that cannot be linked to a feature will be '.
                           'discarded. '),
       '#default_value' => $gojob
+  );
+
+  //Get list of analyses
+  $sql = "SELECT * FROM {analysis} ORDER BY name";
+  $org_rset = chado_query($sql);
+  $analyses = array();
+  $analyses[''] = '';
+  while ($analysis = $org_rset->fetchObject()) {
+    $analyses[$analysis->analysis_id] = "$analysis->name ($analysis->program $analysis->programversion, $analysis->sourcename)";
+  }
+
+
+  $form['go']['import_options']['IPRanalysis'] = array(
+    '#type' => 'select',
+    '#title' => t('Import GO terms from existing InterproScan analysis'),
+    '#description' => t('If loading GO terms from an existing InterProScan analysis, select the analysis to extract terms from.'),
+    '#default_value' => NULL,
+    '#options' => $analyses
   );
 
   // Advanced Options
@@ -224,7 +242,6 @@ function chado_analysis_go_form($node, $form_state) {
                      as the uniquename for the sequences.  If this is not desired, you may use the following regular
                      expressions to define the location of the name or unique name within the text of column 2.'),
    );
-
    $form['go']['advanced']['re_name']= array(
       '#type' => 'textfield',
       '#title' => t('Regular expression for the name'),
@@ -252,6 +269,7 @@ function chado_analysis_go_validate($node,  &$form, &$form_state) {
   $node->seq_type        = trim($node->seq_type);
   $node->query_uniquename  = trim($node->query_uniquename);
   $node->re_uniquename  = trim($node->query_uniquename);
+  dpm($node);
 
   if($node->gaf_file and !is_readable($node->gaf_file)) {
     form_set_error('gaf_file', "Can not read GAF file: '$node->gaf_file'. Please check file permissions or typos in the file path.");

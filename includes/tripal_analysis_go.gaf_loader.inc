@@ -252,3 +252,21 @@ function tripal_analysis_go_load_gaf_go_term($feature, $dbxref, $method, $analys
    }
    return 1;
 }
+
+/**
+ *
+ * Load GO terms from existing XML entries
+ */
+
+
+//function tripal_analysis_go_load_IPR_XML() {
+//
+//
+//  $desiredAFPtype_ID = '48837';
+//  //located in analysisfeatureprop
+//
+//  $analysisfeatureprop = chado_select_record('analysisfeatureprop',array('*'),$values);
+//
+//  );
+//
+//}
