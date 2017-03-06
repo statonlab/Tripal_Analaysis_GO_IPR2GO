@@ -141,10 +141,7 @@ function tripal_analysis_go_full_report($ids) {
    $analysis_id = preg_replace("/^(\d+)-(\d+)$/","$1",$ids);
    $organism_id = preg_replace("/^(\d+)-(\d+)$/","$2",$ids);
    $content = '';
-
-  dpm($analysis_id);
-  dpm($organism_id);
-
+  
    if($analysis_id and $organism_id){
       $content = "
 
