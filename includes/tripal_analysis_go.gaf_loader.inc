@@ -146,6 +146,37 @@ function tripal_analysis_go_load_single_gaf($analysis_id, $gaf_file, $seq_type,
     }
 }
 
+
+
+/**
+ *
+ * Load GO terms from existing XML entries
+ */
+
+//
+//  $desiredAFPtype_ID = '48837';
+//  //located in analysisfeatureprop
+//
+//  $analysisfeatureprop = chado_select_record('analysisfeatureprop',array('*'),$values);
+//
+//  );
+//
+//}
+function tripal_analysis_go_load_IPR_XML($analysis_id, $seq_type,
+  $query_uniquename, $method, $re_name, $job_id, $ipr_analysis_id) {
+
+  $sql = "
+       SELECT AFP.value as XML, AFP.analysisfeature_id as analysisfeatureID, AFP.type_id as typeID
+       FROM {analysisfeatureprop} AFP
+          INNER JOIN {analysisfeature} AF   ON AFP.analysisfeature_id = AF.analysisfeature_id
+        WHERE
+         AF.analysis_id = :iprID
+   " ;
+
+    $results = chado_query($sql, array(':iprID' => $ipr_analysis_id));
+
+  }
+
 /**
 *
 */
@@ -252,21 +283,3 @@ function tripal_analysis_go_load_gaf_go_term($feature, $dbxref, $method, $analys
    }
    return 1;
 }
-
-/**
- *
- * Load GO terms from existing XML entries
- */
-
-
-//function tripal_analysis_go_load_IPR_XML() {
-//
-//
-//  $desiredAFPtype_ID = '48837';
-//  //located in analysisfeatureprop
-//
-//  $analysisfeatureprop = chado_select_record('analysisfeatureprop',array('*'),$values);
-//
-//  );
-//
-//}
