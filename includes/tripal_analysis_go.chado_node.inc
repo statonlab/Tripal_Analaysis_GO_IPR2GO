@@ -221,7 +221,7 @@ function chado_analysis_go_form($node, $form_state) {
   }
 
 
-  $form['go']['import_options']['IPRanalysis'] = array(
+  $form['go']['import_options']['iprAnalysis'] = array(
     '#type' => 'select',
     '#title' => t('Import GO terms from existing InterproScan analysis'),
     '#description' => t('If loading GO terms from an existing InterProScan analysis, select the analysis to extract terms from.'),
@@ -273,7 +273,7 @@ function chado_analysis_go_validate($node,  &$form, &$form_state) {
   if($node->gaf_file and !is_readable($node->gaf_file)) {
     form_set_error('gaf_file', "Can not read GAF file: '$node->gaf_file'. Please check file permissions or typos in the file path.");
   }
-   if (!$node->gaf_file and !$node->IPRanalysis) {
+   if (!$node->gaf_file and !$node->iprAnalysis) {
     form_set_error('gaf_file', "Please specify either a GAF file or Interpro analysis");
   }
 
@@ -406,17 +406,35 @@ function chado_analysis_go_submit_job($node) {
   if ($node->gojob) {
 
     $job_args = array(
-        $node->analysis_id,
-        $node->gaf_file,
-        $node->gaf_file_ext,
-        $node->seq_type,
-        $node->query_uniquename,
-        $node->method,
-        $node->re_name,
-        $node->gojob,
+      $node->analysis_id,
+      $node->gaf_file,
+      $node->gaf_file_ext,
+      $node->seq_type,
+      $node->query_uniquename,
+      $node->method,
+      $node->re_name,
+      $node->gojob,
+      $node->iprAnalysis,
     );
 
-    tripal_add_job("Load GAF 2.0 file: $node->gaf_file", 'tripal_analysis_go', 'tripal_analysis_go_load_gaf', $job_args, $user->uid);
+    if ($node->gaf_file) {
+      tripal_add_job(
+        "Load GAF 2.0 file: $node->gaf_file",
+        'tripal_analysis_go',
+        'tripal_analysis_go_load_gaf',
+        $job_args,
+        $user->uid
+      );
+    }
+    if ($node->iprAnalysis){
+      tripal_add_job(
+        "Load GAF from Interpro analysis $node->iprAnalysis",
+        'tripal_analysis_go',
+        'tripal_analysis_go_load_ipr_xml',
+        $job_args,
+        $user->uid
+      );
+    }
   }
 }
 

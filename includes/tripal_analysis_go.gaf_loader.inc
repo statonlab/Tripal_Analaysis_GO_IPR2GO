@@ -6,7 +6,7 @@
  * @ingroup gaf_loader
  */
 function tripal_analysis_go_load_gaf($analysis_id, $gaf_file, $gaf_file_ext, $seq_type,
-   $query_uniquename, $method, $re_name, $job_id) {
+   $query_uniquename, $method, $re_name, $job_id, $ipr_analysis) {
 
   $transaction = db_transaction();
   print "\nNOTE: Loading of this GAF file is performed using a database transaction. \n" .
@@ -150,32 +150,51 @@ function tripal_analysis_go_load_single_gaf($analysis_id, $gaf_file, $seq_type,
 
 /**
  *
- * Load GO terms from existing XML entries
+ * Load GO terms from existing XML entries.
+ * This function is called instead of tripal_analysis_go_load_gaf
  */
 
-//
-//  $desiredAFPtype_ID = '48837';
-//  //located in analysisfeatureprop
-//
-//  $analysisfeatureprop = chado_select_record('analysisfeatureprop',array('*'),$values);
-//
-//  );
-//
-//}
-function tripal_analysis_go_load_IPR_XML($analysis_id, $seq_type,
-  $query_uniquename, $method, $re_name, $job_id, $ipr_analysis_id) {
 
-  $sql = "
+function tripal_analysis_go_load_ipr_xml($analysis_id, $gaf_file, $gaf_file_ext, $seq_type,
+  $query_uniquename, $method, $re_name, $job_id, $ipr_analysis) {
+
+  $transaction = db_transaction();
+  print "\nNOTE: Loading is performed using a database transaction. \n" .
+    "If the load fails or is terminated prematurely then the entire set of \n" .
+    "insertions/updates is rolled back and will not be found in the database\n\n";
+
+
+  print "Loading GO terms from existing Interpro analysis ID $ipr_analysis\n";
+
+  try {
+    $sql = "
        SELECT AFP.value as XML, AFP.analysisfeature_id as analysisfeatureID, AFP.type_id as typeID
        FROM {analysisfeatureprop} AFP
           INNER JOIN {analysisfeature} AF   ON AFP.analysisfeature_id = AF.analysisfeature_id
         WHERE
          AF.analysis_id = :iprID
-   " ;
+   ";
 
-    $results = chado_query($sql, array(':iprID' => $ipr_analysis_id));
+    $results = chado_query($sql, array(':iprID' => (int)$ipr_analysis));
+
+    $i = 0;
+    $terms = array();
+
+    foreach ($results as $term) {
+        print $term;
+      } }
 
   }
+  catch (Exception $e) {
+      print "\n"; // make sure we start errors on new line
+      $transaction->rollback();
+      watchdog_exception('T_GAF_load', $e);
+      print "FAILED: Rolling back database changes...\n";
+    }
+  print "\nDone.\n";
+  return;
+
+}
 
 /**
 *
