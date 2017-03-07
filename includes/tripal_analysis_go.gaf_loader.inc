@@ -155,8 +155,11 @@ function tripal_analysis_go_load_single_gaf($analysis_id, $gaf_file, $seq_type,
  */
 
 
+//function tripal_analysis_go_load_gaf($analysis_id, $gaf_file, $gaf_file_ext, $seq_type,
+//  $query_uniquename, $method, $re_name, $job_id, $ipr_analysis) {
+
 function tripal_analysis_go_load_ipr_xml($analysis_id, $gaf_file, $gaf_file_ext, $seq_type,
-  $query_uniquename, $method, $re_name, $job_id, $ipr_analysis) {
+  $query_uniquename, $method, $re_name, $job_id, $ipr_analysis, $uid) {
 
   $transaction = db_transaction();
   print "\nNOTE: Loading is performed using a database transaction. \n" .
@@ -166,9 +169,13 @@ function tripal_analysis_go_load_ipr_xml($analysis_id, $gaf_file, $gaf_file_ext,
 
   print "Loading GO terms from existing Interpro analysis ID $ipr_analysis\n";
 
+  print "analysis: $analysis_id\n GAF_file $gaf_file \nGAF_FILE_EXT $gaf_file_ext\n".
+    "seq type $seq_type\n queryUniqueName $query_uniquename\n method: $method\n".
+  "rename: $re_name\n jobid $job_id\n ipranalysis $ipr_analysis\n uid $uid";
+
   try {
     $sql = "
-       SELECT AFP.value as XML, AFP.analysisfeature_id as analysisfeatureID, AFP.type_id as typeID
+       SELECT AFP.value as value, AFP.analysisfeature_id as analysisfeatureid, AFP.type_id as typeid
        FROM {analysisfeatureprop} AFP
           INNER JOIN {analysisfeature} AF   ON AFP.analysisfeature_id = AF.analysisfeature_id
         WHERE
@@ -181,10 +188,12 @@ function tripal_analysis_go_load_ipr_xml($analysis_id, $gaf_file, $gaf_file_ext,
     $terms = array();
 
     foreach ($results as $term) {
-        print $term;
-      } }
-
+        tripal_analysis_go_lookup_go_from_ipr($term->value, $term->typeid, $term->analysisfeatureid);
+        $i++;
+      }
   }
+
+
   catch (Exception $e) {
       print "\n"; // make sure we start errors on new line
       $transaction->rollback();
@@ -194,6 +203,16 @@ function tripal_analysis_go_load_ipr_xml($analysis_id, $gaf_file, $gaf_file_ext,
   print "\nDone.\n";
   return;
 
+}
+
+function tripal_analysis_go_lookup_go_from_ipr($value, $typeid, $analysisfeatureid){
+//Only look at IPR terms, and exclude the raw XML if present
+  if ( strpos($value, 'protein') == false && strpos($value, 'IPR') !== false ){
+    //look up this interpro term and return array of GO terms
+
+    print "$value is an IPR term\n";
+     }
+return;
 }
 
 /**
