@@ -155,6 +155,7 @@ function chado_analysis_go_form($node, $form_state) {
                              installation (e.g. /sites/default/files/xyz.txt).  The path must be accessible to the
                              server on which this Drupal instance is running.  If loading GO terms from an existing interpro analysis,
                              leave this field blank.'),
+
       '#required' => FALSE,
       '#default_value' => $gaf_file,
   );

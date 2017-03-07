@@ -141,14 +141,14 @@ function tripal_analysis_go_full_report($ids) {
    $analysis_id = preg_replace("/^(\d+)-(\d+)$/","$1",$ids);
    $organism_id = preg_replace("/^(\d+)-(\d+)$/","$2",$ids);
    $content = '';
-
+  
    if($analysis_id and $organism_id){
       $content = "
 
         <b>Biological Process</b>
-        <br><i>Expand the tree to browse term counts. Click a term to view term details.</i>
+        <br><i>Expand the tree to browse term counts. Click a term to view term details. </i>
         <div class=\"tripal_cv_tree\"  id=\"tripal_analysis_go_cv_tree_".$organism_id."-".$analysis_id."_bp\"></div>
-	      <br><br><div class=\"tripal_cv_chart\" id=\"tripal_analysis_go_cv_chart_".$organism_id."-".$analysis_id."_bp\"></div>
+	    <br><br><div class=\"tripal_cv_chart\" id=\"tripal_analysis_go_cv_chart_".$organism_id."-".$analysis_id."_bp\"></div>
 	      <br><br><br><br>
 
         <b>Cellular Component</b>
