@@ -119,6 +119,7 @@ function chado_analysis_go_form($node, $form_state) {
     $method             = $form_state['values']['method'];
     $re_name            = $form_state['values']['re_name'];
     $gojob              = $form_state['values']['gojob'];
+
   }
   // if we are re building the form from after submission (from ajax call) then
   // the values are in the $form_state['input'] array
@@ -130,6 +131,7 @@ function chado_analysis_go_form($node, $form_state) {
     $method             = $form_state['input']['method'];
     $re_name            = $form_state['input']['re_name'];
     $gojob              = $form_state['input']['gojob'];
+
   }
 
   $form['go'] = array(
@@ -151,7 +153,8 @@ function chado_analysis_go_form($node, $form_state) {
       '#title'         => t('GAF File'),
       '#description'   => t('Please enter the full system path for the GAF file, or a path within the Drupal
                              installation (e.g. /sites/default/files/xyz.txt).  The path must be accessible to the
-                             server on which this Drupal instance is running.'),
+                             server on which this Drupal instance is running.  If loading GO terms from an existing interpro analysis,
+                             leave this field blank.'),
       '#required' => FALSE,
       '#default_value' => $gaf_file,
   );
@@ -166,6 +169,24 @@ function chado_analysis_go_form($node, $form_state) {
                              Please provide the extension without the preceeding period (e.g. "out" rather than ".out"'),
       '#required' => FALSE,
       '#default_value' => $gaf_file_ext,
+
+  );
+
+  //Get list of analyses to display in dropdown
+  $sql = "SELECT * FROM {analysis} ORDER BY name";
+  $org_rset = chado_query($sql);
+  $ipranalysis = array();
+  $ipranalysis[''] = '';
+  while ($analysis = $org_rset->fetchObject()) {
+    $ipranalysis[$analysis->analysis_id] = "$analysis->name ($analysis->program $analysis->programversion, $analysis->sourcename)";
+  }
+
+  $form['go']['ipranalysis'] = array(
+    '#type' => 'select',
+    '#title' => t('Import GO terms from existing InterproScan analysis'),
+    '#description' => t('If loading GO terms from an existing InterProScan analysis, select the analysis to extract terms from.'),
+    '#default_value' => NULL,
+    '#options' => $ipranalysis
   );
 
   $cv = tripal_get_cv(array('name' => 'sequence'));
@@ -196,8 +217,8 @@ function chado_analysis_go_form($node, $form_state) {
       '#type' => 'radios',
       '#title' => t('Import options'),
       '#required' => TRUE,
-      '#options' => array(t('Add GO terms')/*,t('Replace GO terms')*/,t('Remove GO terms'), t('Add GO terms from existing IPR analysis')),
-      '#description' => t('Select if GO terms in the GAF file will be added to each feature or removed.'),
+      '#options' => array(t('Add GO terms'), t('Remove GO terms'),),
+      '#description' => t('Select if GO terms will be added to each feature or removed.'),
       '#default_value' => $method,
    );
 
@@ -211,23 +232,6 @@ function chado_analysis_go_form($node, $form_state) {
       '#default_value' => $gojob
   );
 
-  //Get list of analyses
-  $sql = "SELECT * FROM {analysis} ORDER BY name";
-  $org_rset = chado_query($sql);
-  $analyses = array();
-  $analyses[''] = '';
-  while ($analysis = $org_rset->fetchObject()) {
-    $analyses[$analysis->analysis_id] = "$analysis->name ($analysis->program $analysis->programversion, $analysis->sourcename)";
-  }
-
-
-  $form['go']['import_options']['iprAnalysis'] = array(
-    '#type' => 'select',
-    '#title' => t('Import GO terms from existing InterproScan analysis'),
-    '#description' => t('If loading GO terms from an existing InterProScan analysis, select the analysis to extract terms from.'),
-    '#default_value' => NULL,
-    '#options' => $analyses
-  );
 
   // Advanced Options
    $form['go']['advanced'] = array(
@@ -273,7 +277,7 @@ function chado_analysis_go_validate($node,  &$form, &$form_state) {
   if($node->gaf_file and !is_readable($node->gaf_file)) {
     form_set_error('gaf_file', "Can not read GAF file: '$node->gaf_file'. Please check file permissions or typos in the file path.");
   }
-   if (!$node->gaf_file and !$node->iprAnalysis) {
+   if (!$node->gaf_file and !$node->ipranalysis) {
     form_set_error('gaf_file', "Please specify either a GAF file or Interpro analysis");
   }
 
@@ -414,7 +418,7 @@ function chado_analysis_go_submit_job($node) {
       $node->method,
       $node->re_name,
       $node->gojob,
-      $node->iprAnalysis,
+      $node->ipranalysis,
     );
 
     if ($node->gaf_file) {
@@ -426,9 +430,9 @@ function chado_analysis_go_submit_job($node) {
         $user->uid
       );
     }
-    if ($node->iprAnalysis){
+    if ($node->ipranalysis){
       tripal_add_job(
-        "Load GAF from Interpro analysis $node->iprAnalysis",
+        "Load GAF from Interpro analysis $node->ipranalysis",
         'tripal_analysis_go',
         'tripal_analysis_go_load_ipr_xml',
         $job_args,

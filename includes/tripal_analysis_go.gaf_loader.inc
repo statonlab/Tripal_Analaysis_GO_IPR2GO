@@ -146,17 +146,11 @@ function tripal_analysis_go_load_single_gaf($analysis_id, $gaf_file, $seq_type,
     }
 }
 
-
-
 /**
  *
  * Load GO terms from existing XML entries.
  * This function is called instead of tripal_analysis_go_load_gaf
  */
-
-
-//function tripal_analysis_go_load_gaf($analysis_id, $gaf_file, $gaf_file_ext, $seq_type,
-//  $query_uniquename, $method, $re_name, $job_id, $ipr_analysis) {
 
 function tripal_analysis_go_load_ipr_xml($analysis_id, $gaf_file, $gaf_file_ext, $seq_type,
   $query_uniquename, $method, $re_name, $job_id, $ipr_analysis, $uid) {
@@ -165,12 +159,7 @@ function tripal_analysis_go_load_ipr_xml($analysis_id, $gaf_file, $gaf_file_ext,
   print "\nNOTE: Loading is performed using a database transaction. \n" .
     "If the load fails or is terminated prematurely then the entire set of \n" .
     "insertions/updates is rolled back and will not be found in the database\n\n";
-
   print "Loading GO terms from existing Interpro analysis ID $ipr_analysis\n";
-
-  print "analysis: $analysis_id\n GAF_file $gaf_file \nGAF_FILE_EXT $gaf_file_ext\n".
-    "seq type $seq_type\n queryUniqueName $query_uniquename\n method: $method\n".
-  "rename: $re_name\n jobid $job_id\n ipranalysis $ipr_analysis\n uid $uid";
 
   try {
     $sql = "
@@ -178,17 +167,12 @@ function tripal_analysis_go_load_ipr_xml($analysis_id, $gaf_file, $gaf_file_ext,
        FROM {analysisfeatureprop} AFP
           INNER JOIN {analysisfeature} AF   ON AFP.analysisfeature_id = AF.analysisfeature_id
           INNER JOIN {feature} F   ON F.feature_id = AF.feature_id
-
         WHERE
          AF.analysis_id = :iprID
    ";
-
     $results = chado_query($sql, array(':iprID' => (int)$ipr_analysis));
-
    $iprtogoindex = tripal_analysis_go_load_ipr_to_go(drupal_get_path('module', 'tripal_analysis_go') . '/IPR2GO.txt');
-
     foreach ($results as $term) {
-
       $featureid= $term->featureid;
       $rawfeaturebody = $term->value;
       $featurename=  $term->uniquename;
@@ -197,23 +181,14 @@ function tripal_analysis_go_load_ipr_xml($analysis_id, $gaf_file, $gaf_file_ext,
         print "WARNING: Cannot find the feature: '$name'\n";
       } else {
        $thisgo = tripal_analysis_go_lookup_go_from_ipr($rawfeaturebody, $term->typeid, $term->analysisfeatureid, $iprtogoindex);
-
-
         if ($thisgo){
           foreach ($thisgo as $go_id){
             // add the GO term to the feature
             tripal_analysis_go_load_gaf_go_term($feature[0], $go_id, $method, $analysis_id);
-
           }
         }
-
       }
-
-
-
-
-
-      }
+    }
   }
 
 
@@ -228,7 +203,7 @@ function tripal_analysis_go_load_ipr_xml($analysis_id, $gaf_file, $gaf_file_ext,
 
 }
 /**
- *
+ * Given an interpro ID, looks up GO terms associated with that ID.
  */
 function tripal_analysis_go_lookup_go_from_ipr($value, $typeid, $analysisfeatureid, $iprtogoindex){
 //Only look at IPR terms, and exclude the raw XML if present
@@ -240,7 +215,7 @@ function tripal_analysis_go_lookup_go_from_ipr($value, $typeid, $analysisfeature
 return;
 }
 /**
- *
+ *Loads the interpro to GO assignment made available at EMBL-EBI
  */
 function tripal_analysis_go_load_ipr_to_go($file) {
   $lines = file($file);
@@ -261,8 +236,6 @@ function tripal_analysis_go_load_ipr_to_go($file) {
     }
     return $iprtogoindex;
 }
-
-
 
 /**
 *
