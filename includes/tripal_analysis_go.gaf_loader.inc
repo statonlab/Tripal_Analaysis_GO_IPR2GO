@@ -166,7 +166,6 @@ function tripal_analysis_go_load_ipr_xml($analysis_id, $gaf_file, $gaf_file_ext,
     "If the load fails or is terminated prematurely then the entire set of \n" .
     "insertions/updates is rolled back and will not be found in the database\n\n";
 
-
   print "Loading GO terms from existing Interpro analysis ID $ipr_analysis\n";
 
   print "analysis: $analysis_id\n GAF_file $gaf_file \nGAF_FILE_EXT $gaf_file_ext\n".
@@ -175,21 +174,45 @@ function tripal_analysis_go_load_ipr_xml($analysis_id, $gaf_file, $gaf_file_ext,
 
   try {
     $sql = "
-       SELECT AFP.value as value, AFP.analysisfeature_id as analysisfeatureid, AFP.type_id as typeid
+       SELECT AFP.value as value, AFP.analysisfeature_id as analysisfeatureid, AFP.type_id as typeid, AF.feature_id as featureid, F.uniquename as uniquename 
        FROM {analysisfeatureprop} AFP
           INNER JOIN {analysisfeature} AF   ON AFP.analysisfeature_id = AF.analysisfeature_id
+          INNER JOIN {feature} F   ON F.feature_id = AF.feature_id
+
         WHERE
          AF.analysis_id = :iprID
    ";
 
     $results = chado_query($sql, array(':iprID' => (int)$ipr_analysis));
 
-    $i = 0;
-    $terms = array();
+   $iprtogoindex = tripal_analysis_go_load_ipr_to_go(drupal_get_path('module', 'tripal_analysis_go') . '/IPR2GO.txt');
 
     foreach ($results as $term) {
-        tripal_analysis_go_lookup_go_from_ipr($term->value, $term->typeid, $term->analysisfeatureid);
-        $i++;
+
+      $featureid= $term->featureid;
+      $rawfeaturebody = $term->value;
+      $featurename=  $term->uniquename;
+      $feature = chado_select_record('feature', array('*'), array('uniquename' => $featurename));
+      if (count($feature) == 0) {
+        print "WARNING: Cannot find the feature: '$name'\n";
+      } else {
+       $thisgo = tripal_analysis_go_lookup_go_from_ipr($rawfeaturebody, $term->typeid, $term->analysisfeatureid, $iprtogoindex);
+
+
+        if ($thisgo){
+          foreach ($thisgo as $go_id){
+            // add the GO term to the feature
+            tripal_analysis_go_load_gaf_go_term($feature[0], $go_id, $method, $analysis_id);
+
+          }
+        }
+
+      }
+
+
+
+
+
       }
   }
 
@@ -204,16 +227,42 @@ function tripal_analysis_go_load_ipr_xml($analysis_id, $gaf_file, $gaf_file_ext,
   return;
 
 }
-
-function tripal_analysis_go_lookup_go_from_ipr($value, $typeid, $analysisfeatureid){
+/**
+ *
+ */
+function tripal_analysis_go_lookup_go_from_ipr($value, $typeid, $analysisfeatureid, $iprtogoindex){
 //Only look at IPR terms, and exclude the raw XML if present
   if ( strpos($value, 'protein') == false && strpos($value, 'IPR') !== false ){
     //look up this interpro term and return array of GO terms
-
-    print "$value is an IPR term\n";
-     }
+    $thisgo = $iprtogoindex[$value];
+    return $thisgo;
+  }
 return;
 }
+/**
+ *
+ */
+function tripal_analysis_go_load_ipr_to_go($file) {
+  $lines = file($file);
+  $iprtogoindex = array();
+  foreach ($lines as $line) {
+    $termmatch = str_replace("\n", "", explode(">", $line));
+    $iprstring = preg_replace('/InterPro\:/', '', $termmatch[0]);
+    $iprnumb = explode(' ', $iprstring);
+    $goterm = explode(' ; ', $termmatch[1]);
+    $goterms = array();
+    //Check if there are already GO terms associated
+    if (array_key_exists($iprnumb[0], $iprtogoindex)) {
+      $previousterms = $iprtogoindex[$iprnumb[0]];
+      $goterms = $previousterms;
+    }
+    array_push($goterms, $goterm[1]);
+      $iprtogoindex[$iprnumb[0]] = $goterms;
+    }
+    return $iprtogoindex;
+}
+
+
 
 /**
 *
