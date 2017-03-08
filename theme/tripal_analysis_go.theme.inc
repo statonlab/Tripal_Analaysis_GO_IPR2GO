@@ -2,10 +2,10 @@
 
 /*******************************************************************************
  *
-*/
+ */
 function tripal_analysis_go_preprocess_tripal_feature_go_results(&$variables) {
   $feature = $variables['node']->feature;
-  $db_id = null;
+  $db_id = NULL;
 
   $go_terms = tripal_get_feature_go_results($feature->feature_id);
   $feature->tripal_analysis_go = new stdClass;
@@ -19,10 +19,15 @@ function tripal_analysis_go_preprocess_tripal_feature_go_results(&$variables) {
 function tripal_analysis_go_preprocess_tripal_organism_go_summary(&$variables) {
   $node = $variables['node'];
   $organism = $node->organism;
-  if (!property_exists($organism, 'tripal_analysis_go') || !is_object($organism->tripal_analysis_go)){
+  if (!property_exists($organism, 'tripal_analysis_go') || !is_object(
+      $organism->tripal_analysis_go
+    )
+  ) {
     $organism->tripal_analysis_go = new stdClass;
   }
-  $organism->tripal_analysis_go->select_form = tripal_analysis_go_load_organism_go_summary($node);
+  $organism->tripal_analysis_go->select_form = tripal_analysis_go_load_organism_go_summary(
+    $node
+  );
 }
 
 /**
@@ -59,12 +64,12 @@ function tripal_analysis_go_load_organism_go_summary($node) {
 }
 
 /**
-*
-* @param $form
-* @param $form_state
-* @param $node
-*
-*/
+ *
+ * @param $form
+ * @param $form_state
+ * @param $node
+ *
+ */
 function tripal_analysis_go_select_form($form, $form_state, $node) {
 
   $form = array();
@@ -78,7 +83,10 @@ function tripal_analysis_go_select_form($form, $form_state, $node) {
     AND GO.analysis_id = a.analysis_id
     ORDER BY GO.analysis_id DESC
   ";
-  $results = chado_query($sql, array(':organism_id' => $node->organism->organism_id));
+  $results = chado_query(
+    $sql,
+    array(':organism_id' => $node->organism->organism_id)
+  );
 
   // now build the list of analyses to use in the drop down element
   $analyses = array();
@@ -88,23 +96,25 @@ function tripal_analysis_go_select_form($form, $form_state, $node) {
     $nid = chado_get_nid_from_id('analysis', $analysis->analysis_id);
     $anode = node_load($nid);
     if (node_access("view", $anode)) {
-      $analyses[$analysis->analysis_id."-".$node->organism->organism_id] = "$analysis->name";
+      $analyses[$analysis->analysis_id . "-" . $node->organism->organism_id] = "$analysis->name";
     }
   }
 
   // now generate the select box
   $form['tripal_analysis_go_select'] = array(
     '#title' => t('Select a GO report to view'),
-    '#description' => t('Any analysis with GO results related to this organism are available for viewing. For further information, see the analysis information page.'),
-    '#type'  => 'select',
+    '#description' => t(
+      'Any analysis with GO results related to this organism are available for viewing. For further information, see the analysis information page.'
+    ),
+    '#type' => 'select',
     '#options' => $analyses,
     '#ajax' => array(
       'callback' => "tripal_analysis_go_org_report",
       'wrapper' => 'tripal-analyis-go-report',
-      'effect'   => 'fade',
-      'method'   => 'replace',
+      'effect' => 'fade',
+      'method' => 'replace',
     ),
-    '#suffix' => '<div id="tripal-analyis-go-report"></div>'
+    '#suffix' => '<div id="tripal-analyis-go-report"></div>',
   );
   return $form;
 }
@@ -115,67 +125,68 @@ function tripal_analysis_go_select_form($form, $form_state, $node) {
  */
 function tripal_analysis_go_org_report($form, $form_state) {
 
-    $analysis_id = $form_state['values']['tripal_analysis_go_select'];
-    $content = tripal_analysis_go_full_report($analysis_id);
+  $analysis_id = $form_state['values']['tripal_analysis_go_select'];
+  $content = tripal_analysis_go_full_report($analysis_id);
 
-    $commands = array();
+  $commands = array();
 
-    $commands[] = ajax_command_html('#tripal-analyis-go-report', $content);
+  $commands[] = ajax_command_html('#tripal-analyis-go-report', $content);
 
-    $commands[] = ajax_command_invoke(NULL, 'tripal_analysis_go_init_tree');
+  $commands[] = ajax_command_invoke(NULL, 'tripal_analysis_go_init_tree');
 
-    $commands[] = ajax_command_invoke(NULL, 'tripal_analysis_go_init_graph');
+  $commands[] = ajax_command_invoke(NULL, 'tripal_analysis_go_init_graph');
 
-    return  array('#type' => 'ajax', '#commands' => $commands);
+  return array('#type' => 'ajax', '#commands' => $commands);
 
   $analysis_id = $form_state['values']['tripal_analysis_go_select'];
   $content = tripal_analysis_go_full_report($analysis_id);
   return '<div id="tripal-analyis-go-report">' . $content . '</div>';
 }
+
 /**
  *
  * @param  $analysis_id
  *
  */
 function tripal_analysis_go_full_report($ids) {
-   $analysis_id = preg_replace("/^(\d+)-(\d+)$/","$1",$ids);
-   $organism_id = preg_replace("/^(\d+)-(\d+)$/","$2",$ids);
-   $content = '';
-  
-   if($analysis_id and $organism_id){
-      $content = "
+  $analysis_id = preg_replace("/^(\d+)-(\d+)$/", "$1", $ids);
+  $organism_id = preg_replace("/^(\d+)-(\d+)$/", "$2", $ids);
+  $content = '';
+
+  if ($analysis_id and $organism_id) {
+    $content = "
 
         <b>Biological Process</b>
         <br><i>Expand the tree to browse term counts. Click a term to view term details. </i>
-        <div class=\"tripal_cv_tree\"  id=\"tripal_analysis_go_cv_tree_".$organism_id."-".$analysis_id."_bp\"></div>
-	    <br><br><div class=\"tripal_cv_chart\" id=\"tripal_analysis_go_cv_chart_".$organism_id."-".$analysis_id."_bp\"></div>
+        <div class=\"tripal_cv_tree\"  id=\"tripal_analysis_go_cv_tree_" . $organism_id . "-" . $analysis_id . "_bp\"></div>
+	    <br><br><div class=\"tripal_cv_chart\" id=\"tripal_analysis_go_cv_chart_" . $organism_id . "-" . $analysis_id . "_bp\"></div>
 	      <br><br><br><br>
 
         <b>Cellular Component</b>
         <br><i>Expand the tree to browse term counts. Click a term to view term details.</i>
-        <div class=\"tripal_cv_tree\"  id=\"tripal_analysis_go_cv_tree_".$organism_id."-".$analysis_id."_cc\"></div>
-        <br><br><div class=\"tripal_cv_chart\" id=\"tripal_analysis_go_cv_chart_".$organism_id."-".$analysis_id."_cc\"></div>
+        <div class=\"tripal_cv_tree\"  id=\"tripal_analysis_go_cv_tree_" . $organism_id . "-" . $analysis_id . "_cc\"></div>
+        <br><br><div class=\"tripal_cv_chart\" id=\"tripal_analysis_go_cv_chart_" . $organism_id . "-" . $analysis_id . "_cc\"></div>
 
         <br><br><br><br>
         <b>Molecular Function</b>
         <br><i>Expand the tree to browse term counts. Click a term to view term details.</i>
-        <div class=\"tripal_cv_tree\"  id=\"tripal_analysis_go_cv_tree_".$organism_id."-".$analysis_id."_mf\"></div>
-        <br><br><div class=\"tripal_cv_chart\" id=\"tripal_analysis_go_cv_chart_".$organism_id."-".$analysis_id."_mf\"></div>
+        <div class=\"tripal_cv_tree\"  id=\"tripal_analysis_go_cv_tree_" . $organism_id . "-" . $analysis_id . "_mf\"></div>
+        <br><br><div class=\"tripal_cv_chart\" id=\"tripal_analysis_go_cv_chart_" . $organism_id . "-" . $analysis_id . "_mf\"></div>
       ";
-   }
+  }
 
-   return $content;
+  return $content;
 }
 
 /*******************************************************************************
  */
-function tripal_analysis_go($analysis_id, $type_id = 0, $ajax, $is_v0_3=0) {
+function tripal_analysis_go($analysis_id, $type_id = 0, $ajax, $is_v0_3 = 0) {
 
   drupal_add_library('system', 'drupal.ajax');
 
   $headers = array(
     'GO Name',
-    'GO Terms'
+    'GO Terms',
   );
 
   $rows = array();
@@ -195,8 +206,16 @@ function tripal_analysis_go($analysis_id, $type_id = 0, $ajax, $is_v0_3=0) {
 
   $brite_list = '<ul>';
   while ($brite_term = $result->fetchObject()) {
-    $link = l($brite_term->name, "tripal_analysis_go/report/nojs/$analysis_id/$brite_term->cvterm_id",
-        array('attributes' => array('class' => 'use-ajax', 'onclick' => 'javascript:void(0);')));
+    $link = l(
+      $brite_term->name,
+      "tripal_analysis_go/report/nojs/$analysis_id/$brite_term->cvterm_id",
+      array(
+        'attributes' => array(
+          'class' => 'use-ajax',
+          'onclick' => 'javascript:void(0);',
+        ),
+      )
+    );
     $brite_list .= '<li>' . $link . '</li>';
   }
   $brite_list .= '</ul>';
@@ -209,7 +228,9 @@ function tripal_analysis_go($analysis_id, $type_id = 0, $ajax, $is_v0_3=0) {
       'width' => '25%',
     ),
     array(
-      'data' => '<div id="heirarchy_terms_list">' . t('<i>Note:</i> Click a BRITE heirarchy name to browse term assignments.') . '<div>',
+      'data' => '<div id="heirarchy_terms_list">' . t(
+          '<i>Note:</i> Click a BRITE heirarchy name to browse term assignments.'
+        ) . '<div>',
       'valign' => 'top',
     ),
   );
@@ -235,14 +256,18 @@ function tripal_analysis_go($analysis_id, $type_id = 0, $ajax, $is_v0_3=0) {
   return $content;
 
 }
+
 /**
  *
  */
 function tripal_analysis_go_ajax_update($analysis_id, $cvterm_id) {
- // Get BRITE term from cvterm table
+  // Get BRITE term from cvterm table
 
   $sql = 'SELECT name FROM {cvterm} WHERE cvterm_id = :cvterm_id';
-  $brite_term = chado_query($sql, array(':cvterm_id' => $cvterm_id))->fetchField();
+  $brite_term = chado_query(
+    $sql,
+    array(':cvterm_id' => $cvterm_id)
+  )->fetchField();
 
   // Get BRITE hierarchy tree for this analysis
   $sql = "
@@ -253,7 +278,10 @@ function tripal_analysis_go_ajax_update($analysis_id, $cvterm_id) {
     WHERE (CV.name = 'tripal' or CV.name = 'GO') and CVT.name = :name
      AND AP.analysis_id = :analysis_id
   ";
-  $result = chado_query($sql, array(':name' => $brite_term, 'analysis_id' => $analysis_id))->fetchObject();
+  $result = chado_query(
+    $sql,
+    array(':name' => $brite_term, 'analysis_id' => $analysis_id)
+  )->fetchObject();
 
   $content = "<div id=\"heirarchy_terms_list\"><b>$brite_term</b>" . $result->value . '</div>';
 

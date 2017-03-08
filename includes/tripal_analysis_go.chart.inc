@@ -1,37 +1,52 @@
 <?php
 
-function tripal_analysis_go_cv_chart($chart_id){
+function tripal_analysis_go_cv_chart($chart_id) {
 
   // The CV module will create the JSON array necessary for building a
   // pie chart using jgChart and Google Charts.  We have to pass to it
   // a table that contains count information, tell it which column
   // contains the cvterm_id and provide a filter for getting the
   // results we want from the table.
-  $organism_id = preg_replace("/^tripal_analysis_go_cv_chart_(\d+)-(\d+)_(bp|cc|mf)$/","$1",$chart_id);
-  $analysis_id = preg_replace("/^tripal_analysis_go_cv_chart_(\d+)-(\d+)_(bp|cc|mf)$/","$2",$chart_id);
-  $type        = preg_replace("/^tripal_analysis_go_cv_chart_(\d+)-(\d+)_(bp|cc|mf)$/","$3",$chart_id);
+  $organism_id = preg_replace(
+    "/^tripal_analysis_go_cv_chart_(\d+)-(\d+)_(bp|cc|mf)$/",
+    "$1",
+    $chart_id
+  );
+  $analysis_id = preg_replace(
+    "/^tripal_analysis_go_cv_chart_(\d+)-(\d+)_(bp|cc|mf)$/",
+    "$2",
+    $chart_id
+  );
+  $type = preg_replace(
+    "/^tripal_analysis_go_cv_chart_(\d+)-(\d+)_(bp|cc|mf)$/",
+    "$3",
+    $chart_id
+  );
 
   $sql = "SELECT * FROM {Analysis} WHERE analysis_id = :analysis_id";
-  $analysis = chado_query($sql, array(':analysis_id' => $analysis_id))->fetchObject();
+  $analysis = chado_query(
+    $sql,
+    array(':analysis_id' => $analysis_id)
+  )->fetchObject();
 
 
-  if(strcmp($type,'mf')==0){
-     $class = 'molecular_function';
-     $title = "Number of Molecular Function Terms From $analysis->name Analysis";
+  if (strcmp($type, 'mf') == 0) {
+    $class = 'molecular_function';
+    $title = "Number of Molecular Function Terms From $analysis->name Analysis";
   }
-  if(strcmp($type,'cc')==0){
-     $class = 'cellular_component';
-     $title = "Number of Cellular Component Terms From $analysis->name Analysis";
+  if (strcmp($type, 'cc') == 0) {
+    $class = 'cellular_component';
+    $title = "Number of Cellular Component Terms From $analysis->name Analysis";
   }
-  if(strcmp($type,'bp')==0){
-     $class = 'biological_process';
-     $title = "Number of Biological Process Terms From $analysis->name Analysis";
+  if (strcmp($type, 'bp') == 0) {
+    $class = 'biological_process';
+    $title = "Number of Biological Process Terms From $analysis->name Analysis";
   }
   $options = array(
-     'count_mview'      => 'go_count_analysis',
-     'cvterm_id_column' => 'cvterm_id',
-     'count_column'     => 'feature_count',
-     'filter'           => "
+    'count_mview' => 'go_count_analysis',
+    'cvterm_id_column' => 'cvterm_id',
+    'count_column' => 'feature_count',
+    'filter' => "
         CNT.organism_id = $organism_id AND
         CNT.analysis_id = $analysis_id AND
         CNT.cvterm_id IN (
@@ -43,9 +58,9 @@ function tripal_analysis_go_cv_chart($chart_id){
                  CV.name = '$class'
         )
      ",
-     'type'             => 'p',
-     'size'             => '650x260',
-     'title'            => $title,
+    'type' => 'p',
+    'size' => '650x260',
+    'title' => $title,
   );
   return $options;
 }
@@ -77,8 +92,15 @@ function tripal_cv_chart($chart_id) {
 
 }
 
-function tripal_cv_count_chart($cnt_table, $fk_column,
-  $cnt_column, $filter = NULL, $title = '', $type = 'p3', $size='300x75') {
+function tripal_cv_count_chart(
+  $cnt_table,
+  $fk_column,
+  $cnt_column,
+  $filter = NULL,
+  $title = '',
+  $type = 'p3',
+  $size = '300x75'
+) {
 
   if (!$type) {
     $type = 'p3';
@@ -132,9 +154,9 @@ function tripal_cv_count_chart($cnt_table, $fk_column,
     'size' => $size,
     'type' => $type,
 
-    'bar_width'     => 10,
-    'bar_spacing'   => 0,
-    'title'         => $title
+    'bar_width' => 10,
+    'bar_spacing' => 0,
+    'title' => $title,
   );
 
   return $opt;
