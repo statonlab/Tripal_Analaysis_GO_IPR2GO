@@ -645,9 +645,9 @@ function tripal_analysis_go_node_view($node, $view_mode, $langcode) {
       }
       break;
     case 'chado_organism':
-      $goAnalysisCheck = tripal_analysis_go_load_organism_go_summary($node);
+      $go_analysis_check = tripal_analysis_go_load_organism_go_summary($node);
       if ($view_mode == 'full') {
-        if ($goAnalysisCheck['has_results'] > 0) {
+        if ($go_analysis_check['has_results'] > 0) {
           $node->content['tripal_organism_go_summary'] = array(
             '#markup' => theme(
               'tripal_organism_go_summary',
