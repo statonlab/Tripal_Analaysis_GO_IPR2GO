@@ -162,7 +162,7 @@ function tripal_analysis_go_uninstall(){
   // Remove materialized views
   $mview = tripal_get_mview_id('go_count_analysis');
   if ($mview) {
-    tripal_delete_mview($mview_id);
+    tripal_delete_mview($mview);
   }
 
   // Unregister the child analysis.
