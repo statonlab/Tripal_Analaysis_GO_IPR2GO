@@ -216,7 +216,7 @@ function tripal_analysis_go_load_ipr_xml(
    ";
     $results = chado_query($sql, array(':iprID' => (int) $ipr_analysis));
     $ipr_to_go_index = tripal_analysis_go_load_ipr_to_go(
-      drupal_get_path('module', 'tripal_analysis_go') . '/IPR2GO.txt'
+      drupal_get_path('module', 'tripal_analysis_go') . 'includes/IPR2GO.txt'
     );
     foreach ($results as $term) {
       $raw_feature_body = $term->value;
