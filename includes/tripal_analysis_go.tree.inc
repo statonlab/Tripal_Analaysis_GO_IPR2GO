@@ -1,28 +1,40 @@
 <?php
 
-function tripal_analysis_go_cv_tree($tree_id){
+function tripal_analysis_go_cv_tree($tree_id) {
 
-  $organism_id = preg_replace("/^tripal_analysis_go_cv_tree_(\d+)-(\d+)_(bp|cc|mf)$/", "$1", $tree_id);
-  $analysis_id = preg_replace("/^tripal_analysis_go_cv_tree_(\d+)-(\d+)_(bp|cc|mf)$/", "$2", $tree_id);
-  $type        = preg_replace("/^tripal_analysis_go_cv_tree_(\d+)-(\d+)_(bp|cc|mf)$/", "$3", $tree_id);
+  $organism_id = preg_replace(
+    "/^tripal_analysis_go_cv_tree_(\d+)-(\d+)_(bp|cc|mf)$/",
+    "$1",
+    $tree_id
+  );
+  $analysis_id = preg_replace(
+    "/^tripal_analysis_go_cv_tree_(\d+)-(\d+)_(bp|cc|mf)$/",
+    "$2",
+    $tree_id
+  );
+  $type = preg_replace(
+    "/^tripal_analysis_go_cv_tree_(\d+)-(\d+)_(bp|cc|mf)$/",
+    "$3",
+    $tree_id
+  );
 
-  if(strcmp($type,'mf')==0){
-     $class = 'molecular_function';
+  if (strcmp($type, 'mf') == 0) {
+    $class = 'molecular_function';
   }
-  if(strcmp($type,'cc')==0){
-     $class = 'cellular_component';
+  if (strcmp($type, 'cc') == 0) {
+    $class = 'cellular_component';
   }
-  if(strcmp($type,'bp')==0){
-     $class = 'biological_process';
+  if (strcmp($type, 'bp') == 0) {
+    $class = 'biological_process';
   }
 
   $options = array(
-     'cv_id'            => tripal_cv_get_cv_id($class),
-     'count_mview'      => 'go_count_analysis',
-     'cvterm_id_column' => 'cvterm_id',
-     'count_column'     => 'feature_count',
-     'filter'           => "CNT.organism_id = $organism_id AND CNT.analysis_id = $analysis_id",
-     'label'            => 'Features',
+    'cv_id' => tripal_cv_get_cv_id($class),
+    'count_mview' => 'go_count_analysis',
+    'cvterm_id_column' => 'cvterm_id',
+    'count_column' => 'feature_count',
+    'filter' => "CNT.organism_id = $organism_id AND CNT.analysis_id = $analysis_id",
+    'label' => 'Features',
   );
   return $options;
 }
@@ -70,18 +82,30 @@ function tripal_cv_update_tree() {
   }
 
   // get the CV root terms
-  if (strcmp($term, 'root')==0) {
+  if (strcmp($term, 'root') == 0) {
     if (!$cv) {
       $cv = $opt['cv_id'];
     }
-    $content = tripal_cv_init_tree($cv, $opt['count_mview'],
-      $opt['cvterm_id_column'], $opt['count_column'], $opt['filter'], $opt['label']);
+    $content = tripal_cv_init_tree(
+      $cv,
+      $opt['count_mview'],
+      $opt['cvterm_id_column'],
+      $opt['count_column'],
+      $opt['filter'],
+      $opt['label']
+    );
 
-  // get the children terms
+    // get the children terms
   }
   else {
-    $content = tripal_cv_get_term_children($term, $opt['count_mview'],
-      $opt['cvterm_id_column'], $opt['count_column'], $opt['filter'], $opt['label']);
+    $content = tripal_cv_get_term_children(
+      $term,
+      $opt['count_mview'],
+      $opt['cvterm_id_column'],
+      $opt['count_column'],
+      $opt['filter'],
+      $opt['label']
+    );
   }
 
   return drupal_json_output($content);
@@ -96,8 +120,14 @@ function tripal_cv_update_tree() {
  *
  * @ingroup tripal_cv
  */
-function tripal_cv_init_tree($cv_id, $cnt_table = NULL, $fk_column = NULL,
-  $cnt_column = NULL, $filter = NULL, $label = NULL) {
+function tripal_cv_init_tree(
+  $cv_id,
+  $cnt_table = NULL,
+  $fk_column = NULL,
+  $cnt_column = NULL,
+  $filter = NULL,
+  $label = NULL
+) {
 
   // get the list of root terms for the provided CV
   $sql = "
@@ -126,7 +156,10 @@ function tripal_cv_init_tree($cv_id, $cnt_table = NULL, $fk_column = NULL,
     $name = $term->name;
     $count = 0;
     if ($cnt_table) {
-      $cnt_results = chado_query($cnt_sql, array(':cvterm_id' => $term->cvterm_id));
+      $cnt_results = chado_query(
+        $cnt_sql,
+        array(':cvterm_id' => $term->cvterm_id)
+      );
       $count = $cnt_results->fetchObject()->num_items;
 
       if ($count > 0) {
@@ -137,12 +170,12 @@ function tripal_cv_init_tree($cv_id, $cnt_table = NULL, $fk_column = NULL,
       'id' => $term->cvterm_id,
       'text' => $name,
       'state' => array(
-          'opened' => false,
-          'disabled' => false,
-          'selected' => false,
+        'opened' => FALSE,
+        'disabled' => FALSE,
+        'selected' => FALSE,
       ),
-      'children' => true,
-      'type' => 'root'
+      'children' => TRUE,
+      'type' => 'root',
     );
   }
 
@@ -157,11 +190,17 @@ function tripal_cv_init_tree($cv_id, $cnt_table = NULL, $fk_column = NULL,
  *
  * @ingroup tripal_cv_api
  */
-function tripal_cv_get_term_children($cvterm_id, $cnt_table = NULL,
-    $fk_column = NULL, $cnt_column = NULL, $filter = NULL, $label = NULL) {
+function tripal_cv_get_term_children(
+  $cvterm_id,
+  $cnt_table = NULL,
+  $fk_column = NULL,
+  $cnt_column = NULL,
+  $filter = NULL,
+  $label = NULL
+) {
 
-    // get the children for the term provided
-    $sql = "
+  // get the children for the term provided
+  $sql = "
         SELECT CVTR.cvterm_relationship_id,CVTR.subject_id,
         CVT1.name as subject_name, CVT3.name as type_name, CVTR.type_id,
         CVT2.name as object_name,CVTR.object_id
@@ -174,62 +213,68 @@ function tripal_cv_get_term_children($cvterm_id, $cnt_table = NULL,
         ORDER BY CVT1.name
     ";
 
-    $results = chado_query($sql, array('cvterm_id' => $cvterm_id));
+  $results = chado_query($sql, array('cvterm_id' => $cvterm_id));
 
-    // prepare the SQL statement that will allow us to pull out count
-    // information for each term in the tree.
-    if ($cnt_table) {
-        if (!$filter) {
-            $filter = '(1=1)';
-        }
-        $cnt_sql = "
+  // prepare the SQL statement that will allow us to pull out count
+  // information for each term in the tree.
+  if ($cnt_table) {
+    if (!$filter) {
+      $filter = '(1=1)';
+    }
+    $cnt_sql = "
             SELECT CVT.name, CVT.cvterm_id, CNT.$cnt_column as num_items
             FROM {{$cnt_table}} CNT
             INNER JOIN {cvterm} CVT on CNT.$fk_column = CVT.cvterm_id
             WHERE $filter AND CVT.cvterm_id = :cvterm_id
             ORDER BY $cnt_column desc
         ";
+  }
+
+  // populate the JSON content array
+  while ($term = $results->fetchObject()) {
+    // count the number of items per term if requested
+    $name = $term->subject_name;
+    if ($cnt_table) {
+      $count = 0;
+      $cnt_results = chado_query(
+        $cnt_sql,
+        array('cvterm_id' => $term->subject_id)
+      );
+      $count = $cnt_results->fetchObject()->num_items;
+
+      if ($count > 0) {
+        $name .= " (" . number_format($count) . " $label)";
+      }
     }
 
-    // populate the JSON content array
-    while ($term = $results->fetchObject()) {
-        // count the number of items per term if requested
-        $name = $term->subject_name;
-        if ($cnt_table) {
-            $count = 0;
-            $cnt_results = chado_query($cnt_sql, array('cvterm_id' => $term->subject_id));
-            $count = $cnt_results->fetchObject()->num_items;
-
-            if ($count > 0) {
-                $name .= " (" . number_format($count) . " $label)";
-            }
-        }
-
-        // check if we have any children if so then set the value
-        $children = chado_query($sql, array('cvterm_id' => $term->subject_id))->fetchObject();
-        if ($children) {
-            $children = true;
-            $node_type = 'default';
-        }
-        else {
-            $children = array();
-            $node_type = 'leaf';
-        }
-
-        $content[] = array(
-          'id' => $term->subject_id,
-          'text' => $name,
-          'state' => array(
-              'opened' => false,
-              'disabled' => false,
-              'selected' => false,
-          ),
-          'children' => $children,
-          'type' => $node_type,
-        );
+    // check if we have any children if so then set the value
+    $children = chado_query(
+      $sql,
+      array('cvterm_id' => $term->subject_id)
+    )->fetchObject();
+    if ($children) {
+      $children = TRUE;
+      $node_type = 'default';
+    }
+    else {
+      $children = array();
+      $node_type = 'leaf';
     }
 
-    return $content;
+    $content[] = array(
+      'id' => $term->subject_id,
+      'text' => $name,
+      'state' => array(
+        'opened' => FALSE,
+        'disabled' => FALSE,
+        'selected' => FALSE,
+      ),
+      'children' => $children,
+      'type' => $node_type,
+    );
+  }
+
+  return $content;
 }
 
 function tripal_cv_cvterm_info($cvterm_id) {
@@ -305,9 +350,17 @@ function tripal_cv_cvterm_info($cvterm_id) {
   return drupal_json_output(array('update' => $content));
 }
 
-function tripal_analysis_go_cvterm_add($cvterm_id, $tree_id){
-  $organism_id = preg_replace("/^tripal_analysis_go_cv_tree_(\d+)-(\d+)_(bp|cc|mf)$/","$1",$tree_id);
-  $analysis_id = preg_replace("/^tripal_analysis_go_cv_tree_(\d+)-(\d+)_(bp|cc|mf)$/","$2",$tree_id);
+function tripal_analysis_go_cvterm_add($cvterm_id, $tree_id) {
+  $organism_id = preg_replace(
+    "/^tripal_analysis_go_cv_tree_(\d+)-(\d+)_(bp|cc|mf)$/",
+    "$1",
+    $tree_id
+  );
+  $analysis_id = preg_replace(
+    "/^tripal_analysis_go_cv_tree_(\d+)-(\d+)_(bp|cc|mf)$/",
+    "$2",
+    $tree_id
+  );
 
   $sql = "
      SELECT DBX.accession
@@ -316,32 +369,43 @@ function tripal_analysis_go_cvterm_add($cvterm_id, $tree_id){
      WHERE cvterm_id = :cvterm_id
   ";
 
-  $xref = chado_query($sql,array('cvterm_id' => $cvterm_id))->fetchObject();
+  $xref = chado_query($sql, array('cvterm_id' => $cvterm_id))->fetchObject();
 
   $link = url("download_goterm_features/$cvterm_id/$tree_id");
   $options = array(
-     'Download sequences' => "<a href=\"$link\">GO_".$xref->accession.".fasta</a>",
+    'Download sequences' => "<a href=\"$link\">GO_" . $xref->accession . ".fasta</a>",
   );
   return $options;
 }
 
-function tripal_analysis_go_get_goterm_features($cvterm_id,$tree_id){
+function tripal_analysis_go_get_goterm_features($cvterm_id, $tree_id) {
 
-   // get hte accession number for this cvterm and use it in naming the download
-   $sql = "
+  // get hte accession number for this cvterm and use it in naming the download
+  $sql = "
       SELECT DBX.accession
       FROM {cvterm} CVT
         INNER JOIN {dbxref} DBX on DBX.dbxref_id = CVT.dbxref_id
       WHERE cvterm_id = :cvterm_id
    ";
-   $xref = chado_query($sql,array(':cvterm_id' => $cvterm_id))->fetchObject();
+  $xref = chado_query($sql, array(':cvterm_id' => $cvterm_id))->fetchObject();
 
-   drupal_add_http_header('Content-Type', 'text');
-   drupal_add_http_header('Content-Disposition', 'attachment; filename="GO_'.$xref->accession.'.fasta"');
+  drupal_add_http_header('Content-Type', 'text');
+  drupal_add_http_header(
+    'Content-Disposition',
+    'attachment; filename="GO_' . $xref->accession . '.fasta"'
+  );
 
-   $organism_id = preg_replace("/^tripal_analysis_go_cv_tree_(\d+)-(\d+)_(bp|cc|mf)$/","$1",$tree_id);
-   $analysis_id = preg_replace("/^tripal_analysis_go_cv_tree_(\d+)-(\d+)_(bp|cc|mf)$/","$2",$tree_id);
-   $sql = "
+  $organism_id = preg_replace(
+    "/^tripal_analysis_go_cv_tree_(\d+)-(\d+)_(bp|cc|mf)$/",
+    "$1",
+    $tree_id
+  );
+  $analysis_id = preg_replace(
+    "/^tripal_analysis_go_cv_tree_(\d+)-(\d+)_(bp|cc|mf)$/",
+    "$2",
+    $tree_id
+  );
+  $sql = "
       SELECT DISTINCT F.name,F.residues,F.feature_id
       FROM {cvtermpath} CVTP
          INNER JOIN {cvterm} CVT1 on CVTP.subject_id = CVT1.cvterm_id
@@ -352,12 +416,22 @@ function tripal_analysis_go_get_goterm_features($cvterm_id,$tree_id){
       WHERE CVTP.object_id = :object_id and F.organism_id = :organism_id and AF.analysis_id = :analysis_id
       ORDER BY F.name
    ";
-   $results = chado_query($sql,array(':object_id' => $cvterm_id, ':organism_id' => $organism_id, ':analysis_id' => $analysis_id));
+  $results = chado_query(
+    $sql,
+    array(
+      ':object_id' => $cvterm_id,
+      ':organism_id' => $organism_id,
+      ':analysis_id' => $analysis_id,
+    )
+  );
 
-   while($feature = $results->fetchObject()){
-      $seq = tripal_get_feature_sequences(array('feature_id' => $feature->feature_id), array());
-      print '>'.$seq[0]['defline']."\n";
-      print $seq[0]['residues']."\n";
-   }
-   return;
+  while ($feature = $results->fetchObject()) {
+    $seq = tripal_get_feature_sequences(
+      array('feature_id' => $feature->feature_id),
+      array()
+    );
+    print '>' . $seq[0]['defline'] . "\n";
+    print $seq[0]['residues'] . "\n";
+  }
+  return;
 }

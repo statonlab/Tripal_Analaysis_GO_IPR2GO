@@ -5,13 +5,20 @@
  *
  * @ingroup gaf_loader
  */
-function tripal_analysis_go_load_gaf($analysis_id, $gaf_file, $gaf_file_ext, $seq_type,
-   $query_uniquename, $method, $re_name, $job_id) {
+function tripal_analysis_go_load_gaf(
+  $analysis_id,
+  $gaf_file,
+  $gaf_file_ext,
+  $seq_type,
+  $query_uniquename,
+  $method,
+  $re_name,
+  $job_id,
+  $ipr_analysis
+) {
 
   $transaction = db_transaction();
-  print "\nNOTE: Loading of this GAF file is performed using a database transaction. \n" .
-     "If the load fails or is terminated prematurely then the entire set of \n" .
-     "insertions/updates is rolled back and will not be found in the database\n\n";
+  print "\nNOTE: Loading of this GAF file is performed using a database transaction. \n" . "If the load fails or is terminated prematurely then the entire set of \n" . "insertions/updates is rolled back and will not be found in the database\n\n";
 
   print "Opening GAF file $gaf_file\n";
 
@@ -19,13 +26,20 @@ function tripal_analysis_go_load_gaf($analysis_id, $gaf_file, $gaf_file_ext, $se
 
     // If user input a file (e.g. go.gaf)
     if (is_file($gaf_file)) {
-        tripal_analysis_go_load_single_gaf($analysis_id, $gaf_file, $seq_type,
-           $query_uniquename, $method, $re_name, $job_id);
+      tripal_analysis_go_load_single_gaf(
+        $analysis_id,
+        $gaf_file,
+        $seq_type,
+        $query_uniquename,
+        $method,
+        $re_name,
+        $job_id
+      );
     }
     // Otherwise, $gaf_file is a directory. Iterate through all xml files in it
     else {
       if (!$gaf_file_ext) {
-         $gaf_file_ext = 'gaf';
+        $gaf_file_ext = 'gaf';
       }
 
       // Parsing all files in the directory
@@ -40,14 +54,20 @@ function tripal_analysis_go_load_gaf($analysis_id, $gaf_file, $gaf_file_ext, $se
       $no_file = 0;
       $total_files = count($files_to_parse);
       foreach ($files_to_parse as $file) {
-          print "File $no_file of $total_files: $file                       \n";
-          tripal_analysis_go_load_single_gaf($analysis_id, "$gaf_file/$file", $seq_type,
-               $query_uniquename, $method, $re_name, $job_id);
-          $no_file ++;
+        print "File $no_file of $total_files: $file                       \n";
+        tripal_analysis_go_load_single_gaf(
+          $analysis_id,
+          "$gaf_file/$file",
+          $seq_type,
+          $query_uniquename,
+          $method,
+          $re_name,
+          $job_id
+        );
+        $no_file++;
       }
     }
-  }
-  catch (Exception $e) {
+  } catch (Exception $e) {
     print "\n"; // make sure we start errors on new line
     $transaction->rollback();
     watchdog_exception('T_GAF_load', $e);
@@ -58,199 +78,375 @@ function tripal_analysis_go_load_gaf($analysis_id, $gaf_file, $gaf_file_ext, $se
   return;
 }
 
-function tripal_analysis_go_load_single_gaf($analysis_id, $gaf_file, $seq_type,
-  $query_uniquename, $method, $re_name, $job_id) {
+function tripal_analysis_go_load_single_gaf(
+  $analysis_id,
+  $gaf_file,
+  $seq_type,
+  $query_uniquename,
+  $method,
+  $re_name,
+  $job_id
+) {
 
-    $lines = file($gaf_file, FILE_SKIP_EMPTY_LINES);
+  $lines = file($gaf_file, FILE_SKIP_EMPTY_LINES);
 
-    $name = '';
-    $residues = '';
-    $num_lines = sizeof($lines);
-    $interval = intval($num_lines * 0.01);
-    if ($interval == 0) {
-        $interval = 1;
+  $name = '';
+  $residues = '';
+  $num_lines = sizeof($lines);
+  $interval = intval($num_lines * 0.01);
+  if ($interval == 0) {
+    $interval = 1;
+  }
+
+  foreach ($lines as $line_num => $line) {
+    // skip comments
+    if (preg_match('/^\!/', $line)) {
+      continue;
     }
 
-    foreach ($lines as $line_num => $line) {
-        // skip comments
-        if(preg_match('/^\!/',$line)) {
-            continue;
-        }
-
-        // update the job status every 1% features
-        if($job_id and $line_num % $interval == 0) {
-            tripal_set_job_progress($job_id, intval(($line_num/$num_lines)*100));
-        }
-
-        // split the line into it's columns
-        $cols = explode("\t",$line);
-        if (sizeof($cols) < 15) {
-            print "ERROR: improper number of columns on line $line_num\n";
-            print_r($cols);
-            return '';
-        }
-
-        $db        = $cols[0];
-        $object    = $cols[1];
-        $symbol    = $cols[2];
-        $qualifier = $cols[3];
-        $go_id     = $cols[4];
-        $dbxref    = $cols[5];
-        $ecode     = $cols[6];
-        $with      = $cols[7];
-        $aspect    = $cols[8];
-        $obj_name  = $cols[9];
-        $obj_syn   = $cols[10];
-        $obj_type  = $cols[11];
-        $taxon     = $cols[12];
-        $date      = $cols[13];
-        $assigned  = $cols[14];
-        $exten     = $cols[15];
-        $product   = $cols[16];
-
-        // get the name or uniquename for the feature
-        $name = $object;
-        if($re_name){
-            if(!preg_match("/$re_name/",$object,$matches)){
-                print "Regular expression for the feature name finds nothing\n";
-            } else {
-                $name = trim($matches[1]);
-            }
-        } else {
-            if(preg_match("/^\s*(.*?)[\s\|].*$/",$object,$matches)){
-                $name = trim($matches[1]);
-            }
-        }
-
-        // get the feature
-        $values = array(
-            'type_id' => array(
-                'cv_id' => array(
-                    'name' => 'sequence'
-                    ),
-                'name' => $seq_type,
-            )
-        );
-        if(!$query_uniquename){
-            $values['name'] = $name;
-        } else {
-            $values['uniquename'] = $name;
-        }
-        $feature = chado_select_record('feature', array('*'), $values);
-        if (count($feature) == 0) {
-            print "WARNING: Cannot find the feature: '$name'\n";
-        } else {
-            // add the GO term to the feature
-            tripal_analysis_go_load_gaf_go_term($feature[0], $go_id, $method, $analysis_id);
-        }
+    // update the job status every 1% features
+    if ($job_id and $line_num % $interval == 0) {
+      tripal_set_job_progress($job_id, intval(($line_num / $num_lines) * 100));
     }
+
+    // split the line into it's columns
+    $cols = explode("\t", $line);
+    if (sizeof($cols) < 15) {
+      print "ERROR: improper number of columns on line $line_num\n";
+      print_r($cols);
+      return '';
+    }
+
+    $db = $cols[0];
+    $object = $cols[1];
+    $symbol = $cols[2];
+    $qualifier = $cols[3];
+    $go_id = $cols[4];
+    $dbxref = $cols[5];
+    $ecode = $cols[6];
+    $with = $cols[7];
+    $aspect = $cols[8];
+    $obj_name = $cols[9];
+    $obj_syn = $cols[10];
+    $obj_type = $cols[11];
+    $taxon = $cols[12];
+    $date = $cols[13];
+    $assigned = $cols[14];
+    $exten = $cols[15];
+    $product = $cols[16];
+
+    // get the name or uniquename for the feature
+    $name = $object;
+    if ($re_name) {
+      if (!preg_match("/$re_name/", $object, $matches)) {
+        print "Regular expression for the feature name finds nothing\n";
+      }
+      else {
+        $name = trim($matches[1]);
+      }
+    }
+    else {
+      if (preg_match("/^\s*(.*?)[\s\|].*$/", $object, $matches)) {
+        $name = trim($matches[1]);
+      }
+    }
+
+    // get the feature
+    $values = array(
+      'type_id' => array(
+        'cv_id' => array(
+          'name' => 'sequence',
+        ),
+        'name' => $seq_type,
+      ),
+    );
+    if (!$query_uniquename) {
+      $values['name'] = $name;
+    }
+    else {
+      $values['uniquename'] = $name;
+    }
+    $feature = chado_select_record('feature', array('*'), $values);
+    if (count($feature) == 0) {
+      print "WARNING: Cannot find the feature: '$name'\n";
+    }
+    else {
+      // add the GO term to the feature
+      tripal_analysis_go_load_gaf_go_term(
+        $feature[0],
+        $go_id,
+        $method,
+        $analysis_id
+      );
+    }
+  }
 }
 
 /**
-*
-*/
-function tripal_analysis_go_load_gaf_go_term($feature, $dbxref, $method, $analysis_id){
+ *
+ * Load GO terms from existing XML entries.
+ * This function is called instead of tripal_analysis_go_load_gaf
+ */
 
-   // get the database name from the reference.  If it doesn't exist then create one.
-   $ref = explode(":",$dbxref);
-   $dbname = $ref[0];
-   $accession = $ref[1];
+function tripal_analysis_go_load_ipr_xml(
+  $analysis_id,
+  $gaf_file,
+  $gaf_file_ext,
+  $seq_type,
+  $query_uniquename,
+  $method,
+  $re_name,
+  $job_id,
+  $ipr_analysis,
+  $uid
+) {
 
-   // first look for the database name
-   $db = chado_select_record('db', array('db_id'), array('name' => "DB:$dbname"));
-   if(sizeof($db) == 0){
-      $db = chado_select_record('db', array('db_id'), array('name' => "$dbname"));
-   }
-   if(sizeof($db) == 0){
-      print "ERROR: Database, $dbname is missing for reference: $dbname:$accession\n";
-      return 0;
-   }
+  $transaction = db_transaction();
+  print "\nNOTE: Loading is performed using a database transaction. \n" . "If the load fails or is terminated prematurely then the entire set of \n" . "insertions/updates is rolled back and will not be found in the database\n\n";
+  print "Loading GO terms from existing Interpro analysis ID $ipr_analysis\n";
 
-   $db = $db[0];
-
-   // now check to see if the accession exists
-   $dbxref = chado_select_record('dbxref', array('dbxref_id'), array(
-      'accession' => $accession,'db_id' => $db->db_id));
-   if(sizeof($dbxref) == 0){
-      print "ERROR: Accession, $accession is missing for reference: $dbname:$accession\n";
-      return 0;
-   }
-   $dbxref = $dbxref[0];
-
-   // now check to see if the cvterm exists
-   $cvterm = chado_select_record('cvterm', array('cvterm_id'), array(
-      'dbxref_id' => $dbxref->dbxref_id));
-   // if it doesn't exist in the cvterm table, look for an alternate id
-   if(sizeof($cvterm) == 0){
-      $cvterm = chado_select_record('cvterm_dbxref', array('cvterm_id'), array(
-         'dbxref_id' => $dbxref->dbxref_id));
-   }
-   if(sizeof($cvterm) == 0){
-      print "ERROR: CVTerm is missing for reference: $dbname:$accession\n";
-      return 0;
-   }
-   $cvterm = $cvterm[0];
-
-
-   // check to see if this feature cvterm already exists
-   $fcvt = chado_select_record('feature_cvterm',array('feature_cvterm_id'),
-      array('cvterm_id' => $cvterm->cvterm_id,'feature_id' => $feature->feature_id));
-
-   // now associate this feature with the cvterm if it doesn't already exist
-   if(sizeof($fcvt)==0){
-      $values = array(
-         'feature_id' => $feature->feature_id,
-         'cvterm_id' => $cvterm->cvterm_id,
-         'pub_id' => array(
-            'uniquename' => 'null',
-         ),
+  try {
+    $sql = "
+       SELECT AFP.value as value, AFP.analysisfeature_id as analysisfeatureid, AFP.type_id as typeid, AF.feature_id as featureid, F.uniquename as uniquename 
+       FROM {analysisfeatureprop} AFP
+          INNER JOIN {analysisfeature} AF   ON AFP.analysisfeature_id = AF.analysisfeature_id
+          INNER JOIN {feature} F   ON F.feature_id = AF.feature_id
+        WHERE
+         AF.analysis_id = :iprID
+   ";
+    $results = chado_query($sql, array(':iprID' => (int) $ipr_analysis));
+    $ipr_to_go_index = tripal_analysis_go_load_ipr_to_go(
+      drupal_get_path('module', 'tripal_analysis_go') . '/IPR2GO.txt'
+    );
+    foreach ($results as $term) {
+      $raw_feature_body = $term->value;
+      $featurename = $term->uniquename;
+      $feature = chado_select_record(
+        'feature',
+        array('*'),
+        array('uniquename' => $featurename)
       );
-      $ret = chado_insert_record('feature_cvterm', $values);
-
-      if($ret){
-         print "   Added ontology term $dbname:$accession to feature $feature->uniquename\n";
-      } else {
-         print "ERROR: failed to insert ontology term '$dbname:$accession' for feature: $feature\n";
-         return 0;
+      if (count($feature) == 0) {
+        print "WARNING: Cannot find the feature: '$name'\n";
       }
-   } else {
-      if($method == 'Remove GO terms'){
-         $status = tripal_core_chado_delete('feature_cvterm',
-            array('cvterm_id' => $cvterm->cvterm_id,
-                 'feature_id' => $feature->feature_id));
-         if(!$status){
-            print "ERROR: Failed to delete ontology term $dbname:$accession from feature $feature->uniquename\n";
-         } else {
-            print "   Deleted ontology term $dbname:$accession from feature $feature->uniquename\n";
-         }
-      } else {
-         print "   Ontology term already associated to feature $feature->uniquename, skipping $dbname:$accession\n";
+      else {
+        //Load interpro to go index
+        //Only look at IPR terms, and exclude the raw XML if present
+        if (strpos($raw_feature_body, 'protein') == FALSE && strpos(
+            $raw_feature_body,
+            'IPR'
+          ) !== FALSE
+        ) {
+          //look up this interpro term and return array of GO terms
+          $thisgo = $ipr_to_go_index[$raw_feature_body];
+        }
+        if ($thisgo) {
+          foreach ($thisgo as $go_id) {
+            // add the GO term to the feature
+            tripal_analysis_go_load_gaf_go_term(
+              $feature[0],
+              $go_id,
+              $method,
+              $analysis_id
+            );
+          }
+        }
       }
-   }
+    }
+  } catch (Exception $e) {
+    print "\n"; // make sure we start errors on new line
+    $transaction->rollback();
+    watchdog_exception('T_GAF_load', $e);
+    print "FAILED: Rolling back database changes...\n";
+  }
+  print "\nDone.\n";
+  return;
+}
 
-      //if $method == 'No import' do nothing
+/**
+ *Loads the interpro to GO assignment made available at EMBL-EBI
+ */
+function tripal_analysis_go_load_ipr_to_go($file) {
+  $lines = file($file);
+  $ipr_to_go_index = array();
+  foreach ($lines as $line) {
+    $termmatch = str_replace("\n", "", explode(">", $line));
+    $iprstring = preg_replace('/InterPro\:/', '', $termmatch[0]);
+    $iprnumb = explode(' ', $iprstring);
+    $goterm = explode(' ; ', $termmatch[1]);
+    $goterms = array();
+    //Check if there are already GO terms associated
+    if (array_key_exists($iprnumb[0], $ipr_to_go_index)) {
+      $previousterms = $ipr_to_go_index[$iprnumb[0]];
+      $goterms = $previousterms;
+    }
+    array_push($goterms, $goterm[1]);
+    $ipr_to_go_index[$iprnumb[0]] = $goterms;
+  }
+  return $ipr_to_go_index;
+}
 
-   if($method == 'Add GO terms'){
-      // Insert into analysisfeature table only if it doesn't already exist
-      $values = array('feature_id' => $feature->feature_id, 'analysis_id' => $analysis_id);
-      $analysisfeature = chado_select_record('analysisfeature',array('*'),$values);
-      if(sizeof($analysisfeature) == 0){
-         $analysisfeature = chado_insert_record('analysisfeature',$values);
-         $analysisfeature_id = $analysisfeature['analysisfeature_id'];
-      } else {
-         $analysisfeature_id = $analysisfeature[0]->analysisfeature_id;
+/**
+ *
+ */
+function tripal_analysis_go_load_gaf_go_term(
+  $feature,
+  $dbxref,
+  $method,
+  $analysis_id
+) {
+
+  // get the database name from the reference.  If it doesn't exist then create one.
+  $ref = explode(":", $dbxref);
+  $dbname = $ref[0];
+  $accession = $ref[1];
+
+  // first look for the database name
+  $db = chado_select_record(
+    'db',
+    array('db_id'),
+    array('name' => "DB:$dbname")
+  );
+  if (sizeof($db) == 0) {
+    $db = chado_select_record('db', array('db_id'), array('name' => "$dbname"));
+  }
+  if (sizeof($db) == 0) {
+    print "ERROR: Database, $dbname is missing for reference: $dbname:$accession\n";
+    return 0;
+  }
+
+  $db = $db[0];
+
+  // now check to see if the accession exists
+  $dbxref = chado_select_record(
+    'dbxref',
+    array('dbxref_id'),
+    array(
+      'accession' => $accession,
+      'db_id' => $db->db_id,
+    )
+  );
+  if (sizeof($dbxref) == 0) {
+    print "ERROR: Accession, $accession is missing for reference: $dbname:$accession\n";
+    return 0;
+  }
+  $dbxref = $dbxref[0];
+
+  // now check to see if the cvterm exists
+  $cvterm = chado_select_record(
+    'cvterm',
+    array('cvterm_id'),
+    array(
+      'dbxref_id' => $dbxref->dbxref_id,
+    )
+  );
+  // if it doesn't exist in the cvterm table, look for an alternate id
+  if (sizeof($cvterm) == 0) {
+    $cvterm = chado_select_record(
+      'cvterm_dbxref',
+      array('cvterm_id'),
+      array(
+        'dbxref_id' => $dbxref->dbxref_id,
+      )
+    );
+  }
+  if (sizeof($cvterm) == 0) {
+    print "ERROR: CVTerm is missing for reference: $dbname:$accession\n";
+    return 0;
+  }
+  $cvterm = $cvterm[0];
+
+
+  // check to see if this feature cvterm already exists
+  $fcvt = chado_select_record(
+    'feature_cvterm',
+    array('feature_cvterm_id'),
+    array(
+      'cvterm_id' => $cvterm->cvterm_id,
+      'feature_id' => $feature->feature_id,
+    )
+  );
+
+  // now associate this feature with the cvterm if it doesn't already exist
+  if (sizeof($fcvt) == 0) {
+    $values = array(
+      'feature_id' => $feature->feature_id,
+      'cvterm_id' => $cvterm->cvterm_id,
+      'pub_id' => array(
+        'uniquename' => 'null',
+      ),
+    );
+    $ret = chado_insert_record('feature_cvterm', $values);
+
+    if ($ret) {
+      print "   Added ontology term $dbname:$accession to feature $feature->uniquename\n";
+    }
+    else {
+      print "ERROR: failed to insert ontology term '$dbname:$accession' for feature: $feature\n";
+      return 0;
+    }
+  }
+  else {
+    if ($method == 'Remove GO terms') {
+      $status = tripal_core_chado_delete(
+        'feature_cvterm',
+        array(
+          'cvterm_id' => $cvterm->cvterm_id,
+          'feature_id' => $feature->feature_id,
+        )
+      );
+      if (!$status) {
+        print "ERROR: Failed to delete ontology term $dbname:$accession from feature $feature->uniquename\n";
       }
-
-      // Insert GO terms into analysisfeatureprop table
-      $values = array('analysisfeature_id' => $analysisfeature_id,
-                      'type_id' => $cvterm->cvterm_id,
-                      'value' => "$dbname:$accession",
-                      'rank' => 0);
-      $analysisfeatureprop = chado_select_record('analysisfeatureprop',array('*'),$values);
-      if(sizeof($analysisfeatureprop) == 0){
-         print "   Associating feature $feature->uniquename to analysis $analysis_id\n";
-         $analysisfeatureprop = chado_insert_record('analysisfeatureprop',$values);
+      else {
+        print "   Deleted ontology term $dbname:$accession from feature $feature->uniquename\n";
       }
-   }
-   return 1;
+    }
+    else {
+      print "   Ontology term already associated to feature $feature->uniquename, skipping $dbname:$accession\n";
+    }
+  }
+
+  //if $method == 'No import' do nothing
+
+  if ($method == 'Add GO terms') {
+    // Insert into analysisfeature table only if it doesn't already exist
+    $values = array(
+      'feature_id' => $feature->feature_id,
+      'analysis_id' => $analysis_id,
+    );
+    $analysisfeature = chado_select_record(
+      'analysisfeature',
+      array('*'),
+      $values
+    );
+    if (sizeof($analysisfeature) == 0) {
+      $analysisfeature = chado_insert_record('analysisfeature', $values);
+      $analysisfeature_id = $analysisfeature['analysisfeature_id'];
+    }
+    else {
+      $analysisfeature_id = $analysisfeature[0]->analysisfeature_id;
+    }
+
+    // Insert GO terms into analysisfeatureprop table
+    $values = array(
+      'analysisfeature_id' => $analysisfeature_id,
+      'type_id' => $cvterm->cvterm_id,
+      'value' => "$dbname:$accession",
+      'rank' => 0,
+    );
+    $analysisfeatureprop = chado_select_record(
+      'analysisfeatureprop',
+      array('*'),
+      $values
+    );
+    if (sizeof($analysisfeatureprop) == 0) {
+      print "   Associating feature $feature->uniquename to analysis $analysis_id\n";
+      $analysisfeatureprop = chado_insert_record(
+        'analysisfeatureprop',
+        $values
+      );
+    }
+  }
+  return 1;
 }
